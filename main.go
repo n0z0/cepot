@@ -180,11 +180,12 @@ func main() {
 	}
 	//err = NotifikasiDesktop("Power & Battery", "Energy saver is on 1"+strings.TrimSpace(konten)+"%")
 	jawaban := strings.TrimSpace(konten)
-	go PlayNotificationSound2(jawaban)
 
 	// Konversi string ke integer
 	if angka, err := strconv.Atoi(jawaban); err == nil {
-		go PlayNotificationSound(angka)
+		PlayNotificationSound(angka)
+	} else {
+		PlayNotificationSound2(jawaban)
 	}
 	err = beeep.Notify("Power & Battery", "Energy saver is on 1"+jawaban+"%", "")
 	fmt.Println(err)
