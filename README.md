@@ -23,6 +23,6 @@ Aplikasi untuk Capture and Post
     ```ahk
     F8::Run "C:\Users\PC-10\Documents\cepot\cepot.exe"
     ```
-    Buka soal contoh kemudian pada posisi soal terbukan di browser, pastikan tidak ada window aplikasi apapun yang menutupi soal. Pastikan ketika menekan tombol F8 di laptop, aplikasi cepot.exe akan mengeluarkan notif batere dan suara yang terdengar.
+    Buka soal contoh kemudian pada posisi soal terbukan di browser, pastikan tidak ada window aplikasi apapun yang menutupi soal. Pastikan ketika menekan tombol F8 di laptop, aplikasi cepot.exe akan mengeluarkan notif batere dan suara yang terdengar. buat juga shortcut di taskbar dengan icon yang lucu untuk menjalankan cepot.exe
 
 5. Kembangkan lagi aplikasi ini, dengan cara: setelah capture screen. hasil capture screen user dikirim juga melalui whatsapp ke nomor teman satu team atau ke nomor grup wa satu team. gunakan library https://pkg.go.dev/go.mau.fi/whatsmeow untuk mewujudkan fitur ini.
