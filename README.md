@@ -1,12 +1,12 @@
-# cepot
+# Cepot Agent
 
-Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, analisis soal berbasis AI GLM-4.6V-Flash / Z.AI, pengiriman tangkapan layar paralel ke Telegram, serta indikator jawaban multimedia & gerakan mouse).
+**Cepot Agent** adalah agen AI cerdas (*Agentic AI*) berbasis visi komputer dan aktuasi sistem untuk otomasi **Capture and Post**. Agen ini beroperasi dalam siklus otonom *Perceive ➔ Reason ➔ Act*: mengamati layar (*Perception*), bernalar menggunakan model visi AI GLM-4.6V-Flash (*Reasoning*), mendistribusikan data ke Telegram, dan mengeksekusi aksi nyata ke antarmuka sistem operasi seperti menggerakkan kursor mouse ke 5 arah sebagai sinyal hening, memainkan audio, dan mengirimkan notifikasi (*Action*).
 
 ---
 
 ## 📋 Ikhtisar Proyek (Project Overview)
 
-`cepot` adalah utilitas desktop berbasis Go (Windows) yang dirancang untuk menangkap tampilan layar berisi pertanyaan (misal soal latihan/tes), mengirimkannya ke model visi AI (GLM-4.6V-Flash via API Z.AI), mengirimkan tangkapan layar secara simultan ke Telegram Bot via goroutine, dan mengembalikan jawaban secara instan melalui feedback multisensorik yang hening (*stealth*).
+`Cepot Agent` adalah implementasi *Task-Oriented Vision & Action Agent* berbasis Go. Agen ini dirancang untuk membaca dan menganalisis konten visual di layar monitor (misal soal latihan/tes) secara mandiri, melakukan inferensi penalaran multimodal via API Z.AI, menyiarkan tangkapan layar secara simultan ke Telegram Bot via goroutine, dan memberikan umpan balik aksi (*grounded action*) secara instan melalui gerakan fisik kursor mouse, audio tersamar, dan notifikasi desktop Windows.
 
 ### Alur Eksekusi (Architecture Flow)
 ```text
