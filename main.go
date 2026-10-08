@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gen2brain/beeep"
 	"github.com/kbinani/screenshot"
@@ -101,6 +102,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("Gagal meng-encode gambar ke JPEG: %v", err)
 	}
+
+	// Paralel (Goroutine): Kirim tangkapan layar ke Telegram via Telegram Bot API
+	var wgTelegram sync.WaitGroup
+	jpegBytes := make([]byte, imgBuffer.Len())
+	copy(jpegBytes, imgBuffer.Bytes())
+
+	wgTelegram.Add(1)
+	go func(data []byte) {
+		defer wgTelegram.Done()
+		if err := SendPhotoToTelegram(data, "📸 Tangkapan Layar Soal (cepot)"); err != nil {
+			fmt.Printf("[Telegram] Info: %v\n", err)
+		} else {
+			fmt.Println("[Telegram] Berhasil mengirim tangkapan layar ke Telegram!")
+		}
+	}(jpegBytes)
 
 	base64Image := base64.StdEncoding.EncodeToString(imgBuffer.Bytes())
 	imageDataURL := fmt.Sprintf("data:image/jpeg;base64,%s", base64Image)
@@ -198,4 +214,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("[Notifikasi Desktop Error]: %v\n", err)
 	}
+
+	// Tunggu proses upload Telegram paralel selesai jika masih berlangsung
+	wgTelegram.Wait()
 }
