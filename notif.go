@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,9 +101,15 @@ func PlayNotificationSound(nomor int) {
 }
 
 func PlayNotificationSound2(abjad string) {
+	// Ekstrak opsi A-E yang bersih
+	cleanOpt := ParseAnswerOption(abjad)
+	if cleanOpt == "" {
+		cleanOpt = strings.ToUpper(strings.TrimSpace(abjad))
+	}
+
 	// pilih audio yang akan diputar
 	var notifWav []byte
-	switch abjad {
+	switch cleanOpt {
 	case "A":
 		notifWav = notifSrye
 	case "B":
@@ -111,8 +118,10 @@ func PlayNotificationSound2(abjad string) {
 		notifWav = notifTwk
 	case "D":
 		notifWav = notifUtang
+	case "E":
+		notifWav = notifTwk
 	default:
-		// Kembalikan error jika indeks tidak valid
+		// Fallback audio jika indeks tidak valid
 		notifWav = notifTwk
 	}
 	// decode WAV dari byte yang di-embed

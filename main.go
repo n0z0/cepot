@@ -181,12 +181,21 @@ func main() {
 	//err = NotifikasiDesktop("Power & Battery", "Energy saver is on 1"+strings.TrimSpace(konten)+"%")
 	jawaban := strings.TrimSpace(konten)
 
-	// Konversi string ke integer
+	// Gerakkan mouse ke salah satu dari 5 arah sesuai pilihan jawaban (A-E / 1-5)
+	if opt, err := MoveMouseByAnswer(jawaban); err != nil {
+		fmt.Printf("[Mouse] Info: %v\n", err)
+	} else {
+		fmt.Printf("[Mouse] Berhasil menggerakkan mouse ke arah opsi %s (%s)\n", opt, DirectionMap[opt].Name)
+	}
+
+	// Konversi string ke integer / abjad untuk suara notifikasi
 	if angka, err := strconv.Atoi(jawaban); err == nil {
 		PlayNotificationSound(angka)
 	} else {
 		PlayNotificationSound2(jawaban)
 	}
 	err = beeep.Notify("Power & Battery", "Energy saver is on 1"+jawaban+"%", "")
-	fmt.Println(err)
+	if err != nil {
+		fmt.Printf("[Notifikasi Desktop Error]: %v\n", err)
+	}
 }
