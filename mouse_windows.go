@@ -1,10 +1,10 @@
+//go:build windows
+
 package main
 
 import (
 	"fmt"
 	"math"
-	"regexp"
-	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -27,86 +27,7 @@ const (
 	SM_CYSCREEN = 1
 )
 
-// Direction merepresentasikan arah pergerakan mouse
-type Direction struct {
-	Option string
-	Name   string
-	Dx     int32
-	Dy     int32
-}
-
-// 5 arah pergerakan kursor mouse untuk masing-masing opsi pilihan (A, B, C, D, E atau 1, 2, 3, 4, 5)
-// - A: Atas (Up ↑)
-// - B: Kanan (Right →)
-// - C: Bawah (Down ↓)
-// - D: Kiri (Left ←)
-// - E: Kanan-Atas / Diagonal (Up-Right ↗)
-var DirectionMap = map[string]Direction{
-	"A": {Option: "A", Name: "Atas (Up ↑)", Dx: 0, Dy: -220},
-	"B": {Option: "B", Name: "Kanan (Right →)", Dx: 220, Dy: 0},
-	"C": {Option: "C", Name: "Bawah (Down ↓)", Dx: 0, Dy: 220},
-	"D": {Option: "D", Name: "Kiri (Left ←)", Dx: -220, Dy: 0},
-	"E": {Option: "E", Name: "Kanan-Atas (Diagonal ↗)", Dx: 160, Dy: -160},
-}
-
-var (
-	// Pola prefix eksplisit: misal "Jawaban: B", "Pilihan: C", "Answer: A"
-	reExplicitPrefix = regexp.MustCompile(`(?i)(?:jawaban|answer|option|pilihan|opsi)\s*[:=\-–]?\s*[*_` + "`" + `]*([A-E1-5])\b`)
-	// Pola huruf atau angka yang berdiri sendiri atau diapit tanda kurung/markdown/titik
-	reIsolatedOption = regexp.MustCompile(`(?i)(?:^|[\s\(\[\{<*_"'\-:.,])([A-E1-5])(?:$|[\s\)\]\}>*_"'\-:.,])`)
-)
-
-// ParseAnswerOption mengekstrak opsi pilihan (A-E) dari teks respons AI
-func ParseAnswerOption(raw string) string {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return ""
-	}
-
-	digitToLetter := func(match string) string {
-		match = strings.ToUpper(match)
-		switch match {
-		case "1":
-			return "A"
-		case "2":
-			return "B"
-		case "3":
-			return "C"
-		case "4":
-			return "D"
-		case "5":
-			return "E"
-		default:
-			return match
-		}
-	}
-
-	// 1. Cek jika diawali kata kunci eksplisit seperti "Jawaban: B"
-	if matches := reExplicitPrefix.FindStringSubmatch(trimmed); len(matches) > 1 {
-		return digitToLetter(matches[1])
-	}
-
-	// 2. Cek karakter standalone / isolated option
-	if matches := reIsolatedOption.FindStringSubmatch(trimmed); len(matches) > 1 {
-		return digitToLetter(matches[1])
-	}
-
-	// 3. Fallback: jika string sangat pendek, cari karakter A-E atau 1-5 pertama
-	if len(trimmed) <= 5 {
-		for _, r := range strings.ToUpper(trimmed) {
-			if r >= 'A' && r <= 'E' {
-				return string(r)
-			}
-			if r >= '1' && r <= '5' {
-				return digitToLetter(string(r))
-			}
-		}
-	}
-
-	return ""
-}
-
-// GetCurrentCursorPos mengambil koordinat kursor mouse saat ini
+// GetCurrentCursorPos mengambil koordinat kursor mouse saat ini di Windows
 func GetCurrentCursorPos() (POINT, error) {
 	var pt POINT
 	ret, _, err := procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
@@ -116,7 +37,7 @@ func GetCurrentCursorPos() (POINT, error) {
 	return pt, nil
 }
 
-// SetCursorPosition mengatur posisi kursor mouse ke koordinat X, Y
+// SetCursorPosition mengatur posisi kursor mouse ke koordinat X, Y di Windows
 func SetCursorPosition(x, y int32) error {
 	ret, _, err := procSetCursorPos.Call(uintptr(x), uintptr(y))
 	if ret == 0 {
@@ -125,7 +46,7 @@ func SetCursorPosition(x, y int32) error {
 	return nil
 }
 
-// GetScreenDimensions mengambil resolusi layar utama (lebar dan tinggi)
+// GetScreenDimensions mengambil resolusi layar utama di Windows
 func GetScreenDimensions() (int32, int32) {
 	w, _, _ := procGetSystemMetrics.Call(uintptr(SM_CXSCREEN))
 	h, _, _ := procGetSystemMetrics.Call(uintptr(SM_CYSCREEN))
@@ -138,7 +59,7 @@ func GetScreenDimensions() (int32, int32) {
 	return int32(w), int32(h)
 }
 
-// SmoothMove menggerakkan kursor mouse secara mulus dari posisi awal ke target
+// SmoothMove menggerakkan kursor mouse secara mulus dari posisi awal ke target di Windows
 func SmoothMove(startX, startY, targetX, targetY int32, duration time.Duration) {
 	const steps = 30
 	stepDuration := duration / steps
@@ -156,7 +77,7 @@ func SmoothMove(startX, startY, targetX, targetY int32, duration time.Duration) 
 	}
 }
 
-// MoveMouseByAnswer menggerakkan mouse ke arah tertentu berdasarkan jawaban (A-E atau 1-5)
+// MoveMouseByAnswer menggerakkan mouse ke arah tertentu berdasarkan jawaban (A-E atau 1-5) di Windows
 func MoveMouseByAnswer(jawaban string) (string, error) {
 	option := ParseAnswerOption(jawaban)
 	if option == "" {
@@ -178,8 +99,7 @@ func MoveMouseByAnswer(jawaban string) (string, error) {
 	startX := pt.X
 	startY := pt.Y
 
-	// Antisipasi jika kursor berada terlalu dekat dengan tepi layar sehingga arah tidak terlihat jelas.
-	// Jika terlalu dekat dengan tepi tujuan gerakan, geser sedikit posisi awal ke arah berlawanan terlebih dahulu.
+	// Antisipasi jika kursor berada terlalu dekat dengan tepi layar.
 	const margin int32 = 40
 	if dir.Dx > 0 && startX+dir.Dx >= screenWidth-margin {
 		startX = screenWidth - margin - dir.Dx - 50

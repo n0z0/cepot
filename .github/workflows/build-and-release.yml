@@ -1,0 +1,152 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Run Tests
+        run: go test -v ./...
+
+  build-windows:
+    name: Build Windows Binaries
+    needs: test
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Build Windows Console (${{ matrix.arch }})
+        env:
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          go build -trimpath -ldflags "-s -w" -o dist/cepot-windows-${{ matrix.arch }}.exe .
+
+      - name: Build Windows Silent GUI (${{ matrix.arch }})
+        env:
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          go build -trimpath -ldflags "-s -w -H=windowsgui" -o dist/cepot-windows-${{ matrix.arch }}-gui.exe .
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cepot-windows-${{ matrix.arch }}
+          path: dist/*
+
+  build-linux:
+    name: Build Linux Binary
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Install Audio Dependencies (ALSA & X11)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev
+
+      - name: Build Linux amd64
+        run: |
+          mkdir -p dist
+          go build -trimpath -ldflags "-s -w" -o dist/cepot-linux-amd64 .
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cepot-linux-amd64
+          path: dist/*
+
+  build-darwin:
+    name: Build macOS Binaries
+    needs: test
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Build macOS (${{ matrix.arch }})
+        env:
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p dist
+          go build -trimpath -ldflags "-s -w" -o dist/cepot-darwin-${{ matrix.arch }} .
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cepot-darwin-${{ matrix.arch }}
+          path: dist/*
+
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'tags/v')
+    needs: [build-windows, build-linux, build-darwin]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-files
+          find release-artifacts -type f -exec cp {} release-files/ \;
+          ls -lah release-files/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          generate_release_notes: true

@@ -43,9 +43,14 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 | [`main.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/main.go) | Titik masuk utama: alur screenshot, pemanggilan goroutine Telegram, HTTP client Z.AI API, dan orkestrasi feedback. |
 | [`telegram.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram.go) | Modul pengiriman tangkapan layar ke Telegram Bot API (`/sendPhoto`) via multipart HTTP POST. |
 | [`telegram_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram_test.go) | Unit test validasi modul Telegram (termasuk penanganan aman jika env kosong). |
-| [`mouse.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse.go) | Modul Win32 API (`user32.dll`) untuk pergerakan kursor mouse ke 5 arah dan ekstraksi opsi jawaban (`ParseAnswerOption`). |
+| [`mouse_common.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_common.go) | Definisi arah, pemetaan koordinat, dan parser jawaban (`ParseAnswerOption`) lintas platform. |
+| [`mouse_windows.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_windows.go) | Implementasi Win32 API (`user32.dll`) pergerakan kursor mouse ke 5 arah khusus Windows. |
+| [`mouse_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_other.go) | Stub / fallback untuk platform non-Windows. |
 | [`mouse_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_test.go) | Unit test untuk parser jawaban dan validasi arah mouse. |
 | [`notif.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`). |
+| [`install.ps1`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.ps1) | Skrip instalasi otomatis untuk Windows PowerShell (mendukung build lokal & download rilis). |
+| [`install.sh`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.sh) | Skrip instalasi otomatis untuk Linux & macOS. |
+| [`.github/workflows/build-and-release.yml`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.github/workflows/build-and-release.yml) | Workflow CI/CD GitHub Actions kompilasi otomatis ke Windows, Linux, dan macOS. |
 | [`art/`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/art) | Aset suara WAV (`srye.wav`, `ddmushi.wav`, `tot2wuk2.wav`, `utang.wav`) dan ikon baterai (`bat.png`). |
 
 ---
@@ -97,26 +102,59 @@ Aplikasi menggunakan environment variable berikut:
 
 ---
 
-## 🔨 Kompilasi (Build & Testing)
+## ⚡ Instalasi Cepat (One-Liner Installation)
 
-### Menjalankan Unit Test
+### Windows (PowerShell)
+Jalankan perintah berikut di PowerShell untuk mengunduh/mengompilasi dan memasang `cepot` ke `%LOCALAPPDATA%\cepot` serta otomatis mendaftarkannya ke User PATH:
+```powershell
+irm https://raw.githubusercontent.com/n0z0/cepot/main/install.ps1 | iex
+```
+*Atau secara lokal:*
+```powershell
+.\install.ps1
+```
+*(Tambahkan `-ConsoleMode` jika ingin versi terminal konsol).*
+
+### Linux & macOS (Bash/Zsh)
+Jalankan perintah berikut di terminal:
+```bash
+curl -fsSL https://raw.githubusercontent.com/n0z0/cepot/main/install.sh | bash
+```
+*Atau secara lokal:*
+```bash
+chmod +x install.sh && ./install.sh
+```
+
+---
+
+## 🔨 Kompilasi Manual & Workflow Multi-Platform
+
+### 1. Menjalankan Unit Test
 ```sh
 go test -v ./...
 ```
 
-### Opsi Build Binary
+### 2. Opsi Build Manual (Windows)
 
-1. **Mode Konsol (Standar untuk Debugging)**:
-   ```sh
-   go build .
-   ```
-   *Karakteristik*: Menghasilkan `cepot.exe` berbasis console subsystem. Terminal CMD akan muncul dan menampilkan log respons JSON AI, pengiriman Telegram, serta jumlah penggunaan token.
+- **Mode Konsol (Untuk Debugging / Log Terminal)**:
+  ```sh
+  go build .
+  ```
+  *Karakteristik*: Menghasilkan `cepot.exe` berbasis console subsystem. Terminal CMD akan muncul dan menampilkan log respons JSON AI, pengiriman Telegram, serta jumlah penggunaan token.
 
-2. **Mode Senyap / Silent GUI (Rekomendasi Penggunaan Nyata)**:
-   ```sh
-   go build -ldflags "-H=windowsgui" .
-   ```
-   *Karakteristik*: Menghasilkan `cepot.exe` bertipe GUI subsystem. Saat dieksekusi, **tidak akan muncul jendela hitam command prompt sama sekali**, sehingga sangat hening dan tidak mengganggu tampilan layar.
+- **Mode Senyap / Silent GUI (Rekomendasi Pemakaian Asli)**:
+  ```sh
+  go build -ldflags "-H=windowsgui" .
+  ```
+  *Karakteristik*: Menghasilkan `cepot.exe` bertipe GUI subsystem. Saat dieksekusi, **tidak akan muncul jendela hitam command prompt sama sekali**, sehingga sangat hening.
+
+### 3. Workflow Otomatis GitHub Actions (`.github/workflows/build-and-release.yml`)
+Repositori ini telah dilengkapi dengan workflow CI/CD GitHub Actions yang otomatis mengompilasi binary untuk beberapa platform:
+- **Windows**: `cepot-windows-amd64.exe`, `cepot-windows-amd64-gui.exe`, `cepot-windows-arm64.exe`, `cepot-windows-arm64-gui.exe`
+- **Linux**: `cepot-linux-amd64`
+- **macOS**: `cepot-darwin-amd64` (Intel), `cepot-darwin-arm64` (Apple Silicon M-Series)
+
+Setiap pembuatan tag versi (contoh `git tag v1.0.0 && git push origin v1.0.0`), seluruh binary hasil kompilasi akan otomatis diunggah ke **GitHub Releases**.
 
 ---
 
