@@ -1,6 +1,6 @@
 module github.com/n0z0/cepot
 
-go 1.25.3
+go 1.23
 
 require (
 	github.com/faiface/beep v1.1.0
