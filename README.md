@@ -48,8 +48,8 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 | [`mouse_common.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_common.go) | Definisi arah, pemetaan koordinat, dan parser jawaban (`ParseAnswerOption`) lintas platform. |
 | [`mouse_windows.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_windows.go) | Implementasi Win32 API (`user32.dll`) pergerakan kursor mouse ke 5 arah khusus Windows. |
 | [`mouse_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_other.go) | Stub / fallback untuk platform non-Windows. |
-| [`mouse_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_test.go) | Unit test untuk parser jawaban dan validasi arah mouse. |
-| [`notif.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`). |
+| [`notif_windows.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif_windows.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`) di Windows. |
+| [`notif_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif_other.go) | Stub notifikasi audio untuk platform non-Windows. |
 | [`install.ps1`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.ps1) | Skrip instalasi otomatis Windows (mendukung build, download, mendaftarkan PATH, & konfigurasi .env). |
 | [`install.sh`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.sh) | Skrip instalasi otomatis Linux & macOS (mendukung argumen CLI, PATH, & konfigurasi .env). |
 | [`.env.example`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.env.example) | Contoh template berkas konfigurasi environment. |
