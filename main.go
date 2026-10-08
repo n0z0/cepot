@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/jpeg"
 	"io"
 	"log"
@@ -96,27 +97,24 @@ func main() {
 		log.Fatalf("Gagal melakukan screenshot: %v", err)
 	}
 
-	// 2. Encode gambar ke format JPEG lalu ke Base64
+	// 2. Paralel (Goroutine): Kirim gambar tangkapan layar langsung ke Telegram Bot API
+	var wgTelegram sync.WaitGroup
+	wgTelegram.Add(1)
+	go func(targetImg image.Image) {
+		defer wgTelegram.Done()
+		if err := SendImageToTelegram(targetImg, "📸 Tangkapan Layar Soal (cepot)"); err != nil {
+			fmt.Printf("[Telegram] Info: %v\n", err)
+		} else {
+			fmt.Println("[Telegram] Berhasil mengirim tangkapan layar ke Telegram!")
+		}
+	}(img)
+
+	// Bersamaan dengan itu: Encode gambar ke format JPEG lalu ke Base64 untuk keperluan API Z.AI
 	var imgBuffer bytes.Buffer
 	err = jpeg.Encode(&imgBuffer, img, &jpeg.Options{Quality: 90})
 	if err != nil {
 		log.Fatalf("Gagal meng-encode gambar ke JPEG: %v", err)
 	}
-
-	// Paralel (Goroutine): Kirim tangkapan layar ke Telegram via Telegram Bot API
-	var wgTelegram sync.WaitGroup
-	jpegBytes := make([]byte, imgBuffer.Len())
-	copy(jpegBytes, imgBuffer.Bytes())
-
-	wgTelegram.Add(1)
-	go func(data []byte) {
-		defer wgTelegram.Done()
-		if err := SendPhotoToTelegram(data, "📸 Tangkapan Layar Soal (cepot)"); err != nil {
-			fmt.Printf("[Telegram] Info: %v\n", err)
-		} else {
-			fmt.Println("[Telegram] Berhasil mengirim tangkapan layar ke Telegram!")
-		}
-	}(jpegBytes)
 
 	base64Image := base64.StdEncoding.EncodeToString(imgBuffer.Bytes())
 	imageDataURL := fmt.Sprintf("data:image/jpeg;base64,%s", base64Image)

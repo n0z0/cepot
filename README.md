@@ -13,24 +13,25 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 [Layar / Soal]
       │
       ▼
-1. Screenshot Layar (screenshot.CaptureRect)
-      │
-      ▼
-2. Encode Gambar JPEG & Base64
-      │
-      ├────────────────────────────────────────┐
-      │ (Goroutine Paralel)                    │
-      ▼                                        ▼
-[Kirim ke Telegram Bot API]        3. Kirim ke API Z.AI (GLM-4.6V-Flash)
-(sendPhoto: TELEGRAM_CHAT_ID)                  │
-                                               ▼
-                                   4. Ekstraksi Jawaban (ParseAnswerOption: A, B, C, D, E)
-                                               │
-               ┌───────────────────────────────┼───────────────────────────────┐
-               ▼                               ▼                               ▼
-       [Gerakan Mouse]                [Audio Notifikasi]             [Desktop Notifikasi]
-   Meluncur ke salah satu               Suara unik WAV               Notifikasi tersamar:
-       dari 5 arah                      per opsi abjad                 "Power & Battery"
+1. Screenshot Layar ───► Menghasilkan Objek Gambar (img)
+                               │
+      ┌────────────────────────┴────────────────────────┐
+      ▼ (Goroutine Paralel)                             ▼ (Main Thread)
+2a. Kirim Gambar ke Telegram               2b. Encode Gambar ke Base64 (Z.AI)
+    - Encode ke format JPEG                    - Encode ke format JPEG
+    - Kirim via Telegram Bot API               - Encode ke Base64 Data URL
+      (POST /sendPhoto)                                │
+                                                       ▼
+                                           3. Request ke API Z.AI (GLM-4.6V-Flash)
+                                                       │
+                                                       ▼
+                                           4. Ekstraksi Jawaban (A, B, C, D, E)
+                                                       │
+               ┌───────────────────────────────────────┼───────────────────────────────────────┐
+               ▼                                       ▼                                       ▼
+       [Gerakan Mouse]                        [Audio Notifikasi]                     [Desktop Notifikasi]
+   Meluncur ke salah satu                       Suara unik WAV                       Notifikasi tersamar:
+       dari 5 arah                              per opsi abjad                         "Power & Battery"
 ```
 
 ---

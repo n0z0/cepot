@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -10,16 +12,27 @@ import (
 	"time"
 )
 
-// SendPhotoToTelegram mengirimkan byte JPEG ke Telegram Bot API secara HTTP POST multipart
-func SendPhotoToTelegram(photoBytes []byte, caption string) error {
+// SendImageToTelegram menerima objek gambar image.Image, meng-encode ke format file JPEG,
+// lalu mengirimkannya ke Telegram Bot API (/sendPhoto).
+func SendImageToTelegram(img image.Image, caption string) error {
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	chatID := os.Getenv("TELEGRAM_CHAT_ID")
 
 	if botToken == "" || chatID == "" {
-		// Jika token atau chat ID belum diset, lewati secara halus
 		return fmt.Errorf("TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID tidak diset di environment variables")
 	}
 
+	// Encode objek image ke format file JPEG di memori
+	var imgBuf bytes.Buffer
+	if err := jpeg.Encode(&imgBuf, img, &jpeg.Options{Quality: 90}); err != nil {
+		return fmt.Errorf("gagal meng-encode gambar ke JPEG untuk Telegram: %w", err)
+	}
+
+	return SendPhotoBytesToTelegram(imgBuf.Bytes(), caption, botToken, chatID)
+}
+
+// SendPhotoBytesToTelegram mengirimkan byte file gambar ke Telegram Bot API secara multipart HTTP POST
+func SendPhotoBytesToTelegram(photoBytes []byte, caption, botToken, chatID string) error {
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendPhoto", botToken)
 
 	var reqBody bytes.Buffer
