@@ -78,10 +78,13 @@ type Usage struct {
 }
 
 func main() {
+	// 0. Muat environment variables dari file .env jika ada
+	LoadEnvFiles()
+
 	// --- Konfigurasi ---
 	apiKey := os.Getenv("ZAI_API_KEY")
 	if apiKey == "" {
-		log.Fatal("Environment variable ZAI_API_KEY tidak ditemukan. Silakan set terlebih dahulu.")
+		log.Fatal("Environment variable ZAI_API_KEY tidak ditemukan.\nSilakan set melalui environment variable sistem atau buat file .env dengan isi:\nZAI_API_KEY=your_api_key_here")
 	}
 
 	modelName := "glm-4.6v-flash"

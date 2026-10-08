@@ -3,17 +3,22 @@
     Skrip Instalasi Cepat cepot untuk Windows (PowerShell)
 .DESCRIPTION
     Mengunduh / mengompilasi binary cepot dan memasangnya ke sistem lokal ($env:LOCALAPPDATA\cepot).
-    Dapat dijalankan langsung:
-        irm https://raw.githubusercontent.com/n0z0/cepot/main/install.ps1 | iex
-    atau dijalankan secara lokal:
-        .\install.ps1
+    Mendukung konfigurasi otomatis environment variables (ZAI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID).
+.EXAMPLE
+    .\install.ps1 -ZaiApiKey "your_zai_key" -TelegramBotToken "123:ABC" -TelegramChatId "999"
+.EXAMPLE
+    irm https://raw.githubusercontent.com/n0z0/cepot/main/install.ps1 | iex
 #>
 
 [CmdletBinding()]
 param (
     [string]$Version = "latest",
     [switch]$ConsoleMode,
-    [string]$InstallDir = "$env:LOCALAPPDATA\cepot"
+    [switch]$NonInteractive,
+    [string]$InstallDir = "$env:LOCALAPPDATA\cepot",
+    [string]$ZaiApiKey,
+    [string]$TelegramBotToken,
+    [string]$TelegramChatId
 )
 
 $ErrorActionPreference = "Stop"
@@ -117,22 +122,96 @@ if (-not (Test-Path $ahkPath)) {
     Write-Host "[+] Template AutoHotkey dibuat di: $ahkPath" -ForegroundColor Green
 }
 
-# 6. Selesai & Panduan Konfigurasi
+# 6. Konfigurasi Environment Variables & File .env
+Write-Host ""
+Write-Host "--- Konfigurasi Environment Variables ---" -ForegroundColor Cyan
+
+$envFilePath = Join-Path $InstallDir ".env"
+$currentZai = [Environment]::GetEnvironmentVariable("ZAI_API_KEY", "User")
+if (-not $currentZai) { $currentZai = $env:ZAI_API_KEY }
+
+$canPrompt = [Environment]::UserInteractive -and (-not [Console]::IsInputRedirected) -and (-not $NonInteractive)
+
+# ZAI_API_KEY
+if ($ZaiApiKey) {
+    [Environment]::SetEnvironmentVariable("ZAI_API_KEY", $ZaiApiKey, "User")
+    $env:ZAI_API_KEY = $ZaiApiKey
+    Write-Host "[+] ZAI_API_KEY berhasil disimpan ke User Environment!" -ForegroundColor Green
+} elseif (-not $currentZai) {
+    if ($canPrompt) {
+        $promptKey = Read-Host "Masukkan ZAI_API_KEY Anda (Tekan Enter untuk lewati)"
+        if ($promptKey) {
+            [Environment]::SetEnvironmentVariable("ZAI_API_KEY", $promptKey, "User")
+            $env:ZAI_API_KEY = $promptKey
+            $ZaiApiKey = $promptKey
+            Write-Host "[+] ZAI_API_KEY berhasil disimpan!" -ForegroundColor Green
+        }
+    }
+} else {
+    Write-Host "[OK] ZAI_API_KEY sudah terdaftar di sistem." -ForegroundColor Gray
+    $ZaiApiKey = $currentZai
+}
+
+# TELEGRAM_BOT_TOKEN & TELEGRAM_CHAT_ID
+$currentTgToken = [Environment]::GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", "User")
+if (-not $currentTgToken) { $currentTgToken = $env:TELEGRAM_BOT_TOKEN }
+if ($TelegramBotToken) {
+    [Environment]::SetEnvironmentVariable("TELEGRAM_BOT_TOKEN", $TelegramBotToken, "User")
+    $env:TELEGRAM_BOT_TOKEN = $TelegramBotToken
+    Write-Host "[+] TELEGRAM_BOT_TOKEN berhasil disimpan ke User Environment!" -ForegroundColor Green
+} elseif (-not $currentTgToken -and $canPrompt) {
+    $promptToken = Read-Host "Masukkan TELEGRAM_BOT_TOKEN (Opsional, tekan Enter untuk lewati)"
+    if ($promptToken) {
+        [Environment]::SetEnvironmentVariable("TELEGRAM_BOT_TOKEN", $promptToken, "User")
+        $env:TELEGRAM_BOT_TOKEN = $promptToken
+        $TelegramBotToken = $promptToken
+    }
+}
+
+$currentTgChat = [Environment]::GetEnvironmentVariable("TELEGRAM_CHAT_ID", "User")
+if (-not $currentTgChat) { $currentTgChat = $env:TELEGRAM_CHAT_ID }
+if ($TelegramChatId) {
+    [Environment]::SetEnvironmentVariable("TELEGRAM_CHAT_ID", $TelegramChatId, "User")
+    $env:TELEGRAM_CHAT_ID = $TelegramChatId
+    Write-Host "[+] TELEGRAM_CHAT_ID berhasil disimpan ke User Environment!" -ForegroundColor Green
+} elseif (-not $currentTgChat -and $canPrompt) {
+    $promptChat = Read-Host "Masukkan TELEGRAM_CHAT_ID (Opsional, tekan Enter untuk lewati)"
+    if ($promptChat) {
+        [Environment]::SetEnvironmentVariable("TELEGRAM_CHAT_ID", $promptChat, "User")
+        $env:TELEGRAM_CHAT_ID = $promptChat
+        $TelegramChatId = $promptChat
+    }
+}
+
+# Tulis atau perbarui file .env di direktori instalasi
+$finalZai = if ($ZaiApiKey) { $ZaiApiKey } else { $currentZai }
+$finalTgToken = if ($TelegramBotToken) { $TelegramBotToken } else { $currentTgToken }
+$finalTgChat = if ($TelegramChatId) { $TelegramChatId } else { $currentTgChat }
+
+$envContent = "# Konfigurasi Environment cepot`r`n"
+$envContent += "ZAI_API_KEY=$finalZai`r`n"
+$envContent += "TELEGRAM_BOT_TOKEN=$finalTgToken`r`n"
+$envContent += "TELEGRAM_CHAT_ID=$finalTgChat`r`n"
+[System.IO.File]::WriteAllText($envFilePath, $envContent)
+Write-Host "[+] File konfigurasi tersimpan di: $envFilePath" -ForegroundColor Green
+
+# 7. Selesai
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host "          Instalasi cepot Selesai!            " -ForegroundColor Green
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host "Lokasi Executable: $targetExe" -ForegroundColor White
+Write-Host "Lokasi File .env : $envFilePath" -ForegroundColor White
 Write-Host ""
-Write-Host "Langkah selanjutnya:" -ForegroundColor Yellow
-Write-Host "1. Atur API Key Z.AI Anda di PowerShell:" -ForegroundColor White
-Write-Host "   [System.Environment]::SetEnvironmentVariable('ZAI_API_KEY', 'api_key_anda', 'User')" -ForegroundColor Cyan
+if (-not $finalZai) {
+    Write-Host "[!] PERINGATAN: ZAI_API_KEY belum diisi." -ForegroundColor Yellow
+    Write-Host "    Silakan edit file: $envFilePath" -ForegroundColor Yellow
+    Write-Host "    atau jalankan: [System.Environment]::SetEnvironmentVariable('ZAI_API_KEY', 'api_key_anda', 'User')" -ForegroundColor Cyan
+} else {
+    Write-Host "[OK] Konfigurasi environment siap digunakan!" -ForegroundColor Green
+}
 Write-Host ""
-Write-Host "2. (Opsional) Atur Telegram Bot API:" -ForegroundColor White
-Write-Host "   [System.Environment]::SetEnvironmentVariable('TELEGRAM_BOT_TOKEN', 'token_bot', 'User')" -ForegroundColor Cyan
-Write-Host "   [System.Environment]::SetEnvironmentVariable('TELEGRAM_CHAT_ID', 'id_chat', 'User')" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "3. Jalankan aplikasi:" -ForegroundColor White
+Write-Host "Cara Menjalankan:" -ForegroundColor White
 Write-Host "   cepot.exe" -ForegroundColor Cyan
-Write-Host "   atau gunakan file AutoHotkey di: $ahkPath" -ForegroundColor Gray
+Write-Host "   atau aktifkan AutoHotkey: $ahkPath" -ForegroundColor Gray
 Write-Host ""

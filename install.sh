@@ -4,8 +4,8 @@
 # ==============================================================================
 # Penggunaan:
 #   curl -fsSL https://raw.githubusercontent.com/n0z0/cepot/main/install.sh | bash
-# atau secara lokal:
-#   chmod +x install.sh && ./install.sh
+# Atau dengan argumen:
+#   ./install.sh -k "your_zai_api_key" -t "tg_bot_token" -c "tg_chat_id"
 # ==============================================================================
 
 set -e
@@ -13,6 +13,23 @@ set -e
 REPO="n0z0/cepot"
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+CONFIG_DIR="${HOME}/.config/cepot"
+
+ZAI_API_KEY_ARG=""
+TG_TOKEN_ARG=""
+TG_CHAT_ARG=""
+NON_INTERACTIVE=false
+
+# Parsing argumen baris perintah
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -k|--key) ZAI_API_KEY_ARG="$2"; shift 2 ;;
+        -t|--token) TG_TOKEN_ARG="$2"; shift 2 ;;
+        -c|--chat) TG_CHAT_ARG="$2"; shift 2 ;;
+        -y|--non-interactive) NON_INTERACTIVE=true; shift ;;
+        *) shift ;;
+    esac
+done
 
 echo "=============================================="
 echo "        🚀 Installer cepot (Unix)             "
@@ -41,6 +58,7 @@ case "$ARCH" in
 esac
 
 mkdir -p "$INSTALL_DIR"
+mkdir -p "$CONFIG_DIR"
 TARGET_BIN="$INSTALL_DIR/cepot"
 
 # 3. Cek apakah source code dan Go compiler tersedia secara lokal
@@ -89,7 +107,57 @@ if [ "$BUILT_FROM_SOURCE" = false ]; then
     echo "[+] Binary berhasil diunduh dan dipasang di: $TARGET_BIN"
 fi
 
-# 5. Cek PATH
+# 5. Konfigurasi Environment & Pembuatan File .env
+ENV_FILE="$CONFIG_DIR/.env"
+echo ""
+echo "--- Konfigurasi Environment Variables ---"
+
+CURRENT_ZAI="${ZAI_API_KEY:-}"
+FINAL_ZAI="$CURRENT_ZAI"
+if [ -n "$ZAI_API_KEY_ARG" ]; then
+    FINAL_ZAI="$ZAI_API_KEY_ARG"
+elif [ -z "$CURRENT_ZAI" ] && [ -t 0 ] && [ "$NON_INTERACTIVE" = false ]; then
+    read -r -p "Masukkan ZAI_API_KEY (Tekan Enter untuk lewati): " INPUT_KEY
+    if [ -n "$INPUT_KEY" ]; then
+        FINAL_ZAI="$INPUT_KEY"
+    fi
+fi
+
+CURRENT_TG_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+FINAL_TG_TOKEN="$CURRENT_TG_TOKEN"
+if [ -n "$TG_TOKEN_ARG" ]; then
+    FINAL_TG_TOKEN="$TG_TOKEN_ARG"
+elif [ -z "$CURRENT_TG_TOKEN" ] && [ -t 0 ] && [ "$NON_INTERACTIVE" = false ]; then
+    read -r -p "Masukkan TELEGRAM_BOT_TOKEN (Opsional, Enter untuk lewati): " INPUT_TG
+    if [ -n "$INPUT_TG" ]; then
+        FINAL_TG_TOKEN="$INPUT_TG"
+    fi
+fi
+
+CURRENT_TG_CHAT="${TELEGRAM_CHAT_ID:-}"
+FINAL_TG_CHAT="$CURRENT_TG_CHAT"
+if [ -n "$TG_CHAT_ARG" ]; then
+    FINAL_TG_CHAT="$TG_CHAT_ARG"
+elif [ -z "$CURRENT_TG_CHAT" ] && [ -t 0 ] && [ "$NON_INTERACTIVE" = false ]; then
+    read -r -p "Masukkan TELEGRAM_CHAT_ID (Opsional, Enter untuk lewati): " INPUT_CHAT
+    if [ -n "$INPUT_CHAT" ]; then
+        FINAL_TG_CHAT="$INPUT_CHAT"
+    fi
+fi
+
+# Tulis file .env
+cat <<EOF > "$ENV_FILE"
+# Konfigurasi Environment cepot
+ZAI_API_KEY=$FINAL_ZAI
+TELEGRAM_BOT_TOKEN=$FINAL_TG_TOKEN
+TELEGRAM_CHAT_ID=$FINAL_TG_CHAT
+EOF
+echo "[+] File konfigurasi .env tersimpan di: $ENV_FILE"
+
+# Salin juga ke samping binary agar selalu terbaca jika dijalankan lokal
+cp "$ENV_FILE" "$INSTALL_DIR/.env" 2>/dev/null || true
+
+# 6. Cek PATH
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     echo ""
     echo "[!] Peringatan: $INSTALL_DIR belum ada di PATH shell Anda."
@@ -101,16 +169,17 @@ echo ""
 echo "=============================================="
 echo "        🎉 Instalasi cepot Selesai!           "
 echo "=============================================="
-echo "Lokasi Binary : $TARGET_BIN"
+echo "Lokasi Binary    : $TARGET_BIN"
+echo "Lokasi File .env : $ENV_FILE"
 echo ""
-echo "Langkah Konfigurasi:"
-echo "1. Daftarkan API Key Z.AI:"
-echo "   export ZAI_API_KEY=\"api_key_anda\""
+if [ -z "$FINAL_ZAI" ]; then
+    echo "[!] PERINGATAN: ZAI_API_KEY belum diisi."
+    echo "    Silakan edit file: $ENV_FILE"
+    echo "    atau tambahkan ke file profile shell Anda: export ZAI_API_KEY=\"api_key_anda\""
+else
+    echo "[✓] Konfigurasi environment siap digunakan!"
+fi
 echo ""
-echo "2. (Opsional) Daftarkan Telegram Bot:"
-echo "   export TELEGRAM_BOT_TOKEN=\"token_bot\""
-echo "   export TELEGRAM_CHAT_ID=\"id_chat\""
-echo ""
-echo "3. Jalankan aplikasi:"
+echo "Jalankan aplikasi:"
 echo "   cepot"
 echo ""

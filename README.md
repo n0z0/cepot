@@ -41,6 +41,8 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 | File / Folder | Deskripsi |
 | :--- | :--- |
 | [`main.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/main.go) | Titik masuk utama: alur screenshot, pemanggilan goroutine Telegram, HTTP client Z.AI API, dan orkestrasi feedback. |
+| [`env.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/env.go) | Modul pembaca otomatis file konfigurasi `.env` dari folder kerja, folder executable, atau LocalAppData. |
+| [`env_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/env_test.go) | Unit test parser environment file `.env`. |
 | [`telegram.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram.go) | Modul pengiriman tangkapan layar ke Telegram Bot API (`/sendPhoto`) via multipart HTTP POST. |
 | [`telegram_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram_test.go) | Unit test validasi modul Telegram (termasuk penanganan aman jika env kosong). |
 | [`mouse_common.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_common.go) | Definisi arah, pemetaan koordinat, dan parser jawaban (`ParseAnswerOption`) lintas platform. |
@@ -48,8 +50,9 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 | [`mouse_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_other.go) | Stub / fallback untuk platform non-Windows. |
 | [`mouse_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_test.go) | Unit test untuk parser jawaban dan validasi arah mouse. |
 | [`notif.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`). |
-| [`install.ps1`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.ps1) | Skrip instalasi otomatis untuk Windows PowerShell (mendukung build lokal & download rilis). |
-| [`install.sh`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.sh) | Skrip instalasi otomatis untuk Linux & macOS. |
+| [`install.ps1`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.ps1) | Skrip instalasi otomatis Windows (mendukung build, download, mendaftarkan PATH, & konfigurasi .env). |
+| [`install.sh`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.sh) | Skrip instalasi otomatis Linux & macOS (mendukung argumen CLI, PATH, & konfigurasi .env). |
+| [`.env.example`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.env.example) | Contoh template berkas konfigurasi environment. |
 | [`.github/workflows/build-and-release.yml`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.github/workflows/build-and-release.yml) | Workflow CI/CD GitHub Actions kompilasi otomatis ke Windows, Linux, dan macOS. |
 | [`art/`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/art) | Aset suara WAV (`srye.wav`, `ddmushi.wav`, `tot2wuk2.wav`, `utang.wav`) dan ikon baterai (`bat.png`). |
 
@@ -72,31 +75,63 @@ Saat model AI menentukan pilihan jawaban, kursor mouse akan meluncur secara mulu
 
 ---
 
-## ⚙️ Persyaratan & Konfigurasi
+## ⚙️ Persyaratan & Konfigurasi Environment
 
-### 1. Environment Variable
+Aplikasi mendukung 3 cara fleksibel dalam mengatur konfigurasi:
+1. **Otomatis via Installer Script** (Paling Mudah)
+2. **File `.env`** (Diletakkan di samping `cepot.exe` atau di `%LOCALAPPDATA%\cepot\.env`)
+3. **Environment Variable Sistem Operasi**
 
-Aplikasi menggunakan environment variable berikut:
-
+### Daftar Variabel:
 1. **`ZAI_API_KEY` (Wajib)**: API Key dari platform [Z.AI (BigModel)](https://open.bigmodel.cn/).
 2. **`TELEGRAM_BOT_TOKEN` (Opsional)**: Token bot Telegram dari [@BotFather](https://t.me/BotFather) untuk mengirim screenshot secara otomatis.
 3. **`TELEGRAM_CHAT_ID` (Opsional)**: ID chat / grup target Telegram (misal `123456789` atau `-100123456789`).
 
-#### Cara Menyetel di Windows:
-- **Command Prompt (CMD)**:
+---
+
+### Cara 1: Mengatur Saat Menjalankan Installer
+- **Windows (PowerShell)**:
+  ```powershell
+  .\install.ps1 -ZaiApiKey "your_zai_key" -TelegramBotToken "123:ABC" -TelegramChatId "987654"
+  ```
+  *(Atau jalankan `.\install.ps1` tanpa argumen dan isi prompt interaktif yang muncul)*
+
+- **Linux / macOS**:
+  ```bash
+  ./install.sh -k "your_zai_key" -t "123:ABC" -c "987654"
+  ```
+
+---
+
+### Cara 2: Menggunakan File `.env`
+Salin template [`.env.example`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.env.example) menjadi `.env` di samping binary atau di folder instalasi:
+```env
+ZAI_API_KEY=your_zai_api_key_here
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIkl_ZYXwvutsRqPoNMLkji
+TELEGRAM_CHAT_ID=123456789
+```
+
+---
+
+### Cara 3: Menyetel Langsung di OS
+- **Windows CMD**:
   ```cmd
   setx ZAI_API_KEY "your_zai_api_key_here"
-  setx TELEGRAM_BOT_TOKEN "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-  setx TELEGRAM_CHAT_ID "987654321"
+  setx TELEGRAM_BOT_TOKEN "your_bot_token"
+  setx TELEGRAM_CHAT_ID "your_chat_id"
   ```
 - **PowerShell**:
   ```powershell
   [System.Environment]::SetEnvironmentVariable('ZAI_API_KEY', 'your_zai_api_key_here', 'User')
-  [System.Environment]::SetEnvironmentVariable('TELEGRAM_BOT_TOKEN', '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11', 'User')
-  [System.Environment]::SetEnvironmentVariable('TELEGRAM_CHAT_ID', '987654321', 'User')
+  [System.Environment]::SetEnvironmentVariable('TELEGRAM_BOT_TOKEN', 'your_bot_token', 'User')
+  [System.Environment]::SetEnvironmentVariable('TELEGRAM_CHAT_ID', 'your_chat_id', 'User')
   ```
-
-> *Catatan*: Jika `TELEGRAM_BOT_TOKEN` atau `TELEGRAM_CHAT_ID` tidak diset, aplikasi akan tetap berjalan normal tanpa error fatal (hanya mencetak informasi lewati).
+- **Linux / macOS**:
+  ```bash
+  export ZAI_API_KEY="your_zai_api_key_here"
+  export TELEGRAM_BOT_TOKEN="your_bot_token"
+  export TELEGRAM_CHAT_ID="your_chat_id"
+  ```
 
 <img width="264" height="589" alt="image" src="https://github.com/user-attachments/assets/489709c5-157f-433f-b06d-bf2272ed79c5" />
 
