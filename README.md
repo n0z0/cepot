@@ -40,21 +40,21 @@ Aplikasi otomatisasi untuk **Capture and Post** (Pengambilan tangkapan layar, an
 
 | File / Folder | Deskripsi |
 | :--- | :--- |
-| [`main.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/main.go) | Titik masuk utama: alur screenshot, pemanggilan goroutine Telegram, HTTP client Z.AI API, dan orkestrasi feedback. |
-| [`env.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/env.go) | Modul pembaca otomatis file konfigurasi `.env` dari folder kerja, folder executable, atau LocalAppData. |
-| [`env_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/env_test.go) | Unit test parser environment file `.env`. |
-| [`telegram.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram.go) | Modul pengiriman tangkapan layar ke Telegram Bot API (`/sendPhoto`) via multipart HTTP POST. |
-| [`telegram_test.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/telegram_test.go) | Unit test validasi modul Telegram (termasuk penanganan aman jika env kosong). |
-| [`mouse_common.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_common.go) | Definisi arah, pemetaan koordinat, dan parser jawaban (`ParseAnswerOption`) lintas platform. |
-| [`mouse_windows.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_windows.go) | Implementasi Win32 API (`user32.dll`) pergerakan kursor mouse ke 5 arah khusus Windows. |
-| [`mouse_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/mouse_other.go) | Stub / fallback untuk platform non-Windows. |
-| [`notif_windows.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif_windows.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`) di Windows. |
-| [`notif_other.go`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/notif_other.go) | Stub notifikasi audio untuk platform non-Windows. |
-| [`install.ps1`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.ps1) | Skrip instalasi otomatis Windows (mendukung build, download, mendaftarkan PATH, & konfigurasi .env). |
-| [`install.sh`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/install.sh) | Skrip instalasi otomatis Linux & macOS (mendukung argumen CLI, PATH, & konfigurasi .env). |
-| [`.env.example`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.env.example) | Contoh template berkas konfigurasi environment. |
-| [`.github/workflows/build-and-release.yml`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.github/workflows/build-and-release.yml) | Workflow CI/CD GitHub Actions kompilasi otomatis ke Windows, Linux, dan macOS. |
-| [`art/`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/art) | Aset suara WAV (`srye.wav`, `ddmushi.wav`, `tot2wuk2.wav`, `utang.wav`) dan ikon baterai (`bat.png`). |
+| [`main.go`](main.go) | Titik masuk utama: alur screenshot, pemanggilan goroutine Telegram, HTTP client Z.AI API, dan orkestrasi feedback. |
+| [`env.go`](env.go) | Modul pembaca otomatis file konfigurasi `.env` dari folder kerja, folder executable, atau LocalAppData. |
+| [`env_test.go`](env_test.go) | Unit test parser environment file `.env`. |
+| [`telegram.go`](telegram.go) | Modul pengiriman tangkapan layar ke Telegram Bot API (`/sendPhoto`) via multipart HTTP POST. |
+| [`telegram_test.go`](telegram_test.go) | Unit test validasi modul Telegram (termasuk penanganan aman jika env kosong). |
+| [`mouse_common.go`](mouse_common.go) | Definisi arah, pemetaan koordinat, dan parser jawaban (`ParseAnswerOption`) lintas platform. |
+| [`mouse_windows.go`](mouse_windows.go) | Implementasi Win32 API (`user32.dll`) pergerakan kursor mouse ke 5 arah khusus Windows. |
+| [`mouse_other.go`](mouse_other.go) | Stub / fallback untuk platform non-Windows. |
+| [`notif_windows.go`](notif_windows.go) | Pengatur suara notifikasi audio WAV ter-embed (`beep`) dan notifikasi desktop tersamar (`beeep`) di Windows. |
+| [`notif_other.go`](notif_other.go) | Stub notifikasi audio untuk platform non-Windows. |
+| [`install.ps1`](install.ps1) | Skrip instalasi otomatis Windows (mendukung build, download, mendaftarkan PATH, & konfigurasi .env). |
+| [`install.sh`](install.sh) | Skrip instalasi otomatis Linux & macOS (mendukung argumen CLI, PATH, & konfigurasi .env). |
+| [`.env.example`](.env.example) | Contoh template berkas konfigurasi environment. |
+| [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml) | Workflow CI/CD GitHub Actions kompilasi otomatis ke Windows, Linux, dan macOS. |
+| [`art/`](art/) | Aset suara WAV (`srye.wav`, `ddmushi.wav`, `tot2wuk2.wav`, `utang.wav`) dan ikon baterai (`bat.png`). |
 
 ---
 
@@ -104,7 +104,7 @@ Aplikasi mendukung 3 cara fleksibel dalam mengatur konfigurasi:
 ---
 
 ### Cara 2: Menggunakan File `.env`
-Salin template [`.env.example`](file:///c:/Users/Windows%2011%20Pro/Documents/joe/cepot/.env.example) menjadi `.env` di samping binary atau di folder instalasi:
+Salin template [`.env.example`](.env.example) menjadi `.env` di samping binary atau di folder instalasi:
 ```env
 ZAI_API_KEY=your_zai_api_key_here
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIkl_ZYXwvutsRqPoNMLkji
